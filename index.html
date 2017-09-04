@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>タイムテ作成くん - TIMETABLE GENERATOR</title>
+
+    <!-- ふぁびこん -->
+    <link rel="shortcut icon" href="./favicon.png" type="image/ong">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-default/index.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="./css/main.css">
+    <link rel="stylesheet" href="./css/animate.css">
+
+</head>
+<body class="bg-blue">
+    <div id="app">
+        <header class="animated header fixed" :class="[ showHeader ? 'fadeInDown':'fadeOutUp', { hide:window.pageYOffset === 0 }]">
+            <div id="heaader_block" class="text-white">
+                <small><i class="el-icon-document"></i>&nbsp;タイムテ作成くん - TIMETABLE GENERATOR</small>
+            </div>
+        </header>
+        <!--titleとか-->
+        <div id="title_block">
+            <h1 class="lg-font"><i class="material-icons">assignment</i></h1>
+            <small>TIMETABLE CREATER</small>
+        </div>
+        <h4 class="text-white">タイムテ作成くん</h4>
+        <!--めいん-->
+        <div class="block text-white relative">
+            <el-row>
+                <el-col :md="12">
+                    <!--企画名-->
+                    <div class="margin-all">
+                        <el-input placeholder="イベント名、企画名を入れてね" v-model="eventTitle" @change="createTextData()"></el-input>
+                    </div>
+                    <!--タイムテ-->
+                    <div class="margin-all">
+                        <el-table class="align-left" :data="artists" stripe border style="width: 100%">
+                            <el-table-column prop="time" label="開始時刻" width="110"></el-table-column>
+                            <el-table-column prop="endTime" label="終了時刻" width="110"></el-table-column>
+                            <el-table-column prop="name" label="なまえ"></el-table-column>
+                            <el-table-column fixed="right" label="操作" width="180">
+                                <template scope="scope">
+                                    <el-button v-if="scope.$index !== 0" class="el-icon-arrow-up" size="small" @click="changeOrder(scope.$index, true)"></el-button>
+                                    <el-button v-if="scope.$index !== 0" class="el-icon-arrow-down" size="small" @click="changeOrder(scope.$index, false)"></el-button>
+                                    <el-button v-if="scope.$index !== 0" class="el-icon-delete" size="small" type="danger" @click="deleteArtist(scope.$index)"></el-button>
+                                </template>
+                            </el-table-column>
+                        </el-table>
+                    </div>
+                </el-col>
+                <el-col :md="12">
+                    <!--演者追加部分-->
+                    <div class="margin-all">
+                        <el-input placeholder="追加する出演者を入れてね" v-model="inputValue" @keyup.enter.native="addArtist">
+                            <el-button slot="append" icon="plus" @click="addArtist"></el-button>
+                        </el-input>
+                        <el-alert v-if="hasError" title="空っぽじゃんけ" type="warning" show-icon :closable="false">
+                        </el-alert>
+                    </div>
+
+                    <!--時間にゅーりょく-->
+                    <div class="margin-all-little">
+                        <span>開始時刻:</span>
+                        <el-time-select v-model="startTimeValue" @change="setStartTime"
+                                        :picker-options="{ start: '00:00', step: '00:15', end: '23:45' }"
+                                        placeholder="スタート時刻"></el-time-select>
+                    </div>
+                    <div class="margin-all-little">
+                        <span>演奏時間:</span>
+                        <el-time-select v-model="performTimeValue" @change="resetActTime"
+                                        :picker-options="{ start: '00:00', step: '00:05', end: '02:00' }"
+                                        placeholder="演奏時間" editable="true"></el-time-select>
+                    </div>
+                    <div class="margin-all-little">
+                        <span>転換時間:</span>
+                        <el-time-select v-model="switchTimeValue" @change="resetActTime"
+                                        :picker-options="{ start: '00:00', step: '00:05', end: '1:00' }"
+                                        placeholder="転換時間"></el-time-select>
+                    </div>
+                    <div id="delete_block">
+                        <el-button type="default" size="mini" data-clipboard-target="#timeTableText" @click="showDeleteConfirm">RESET ALL</el-button>
+                    </div>
+                </el-col>
+            </el-row>
+        </div>
+        <div class="text-white">
+            <h1 class="lg-font"><i class="el-icon-caret-bottom"></i></h1>
+            <h4>ADJUST DETAIL</h4>
+            <small>テキスト編集で微調整する</small>
+            <div class="margin-all-little">
+                <textarea style="width:80%;" id="timeTableText" rows="10" placeholder="↑でタイムテを組んでね" v-model="textData" @change="saveEventInfo()"></textarea>
+            </div>
+            <h1 class="lg-font"><i class="el-icon-caret-bottom"></i></h1>
+            <h4>COPY TO CLIPBOARD</h4>
+            <small>クリップボードにコピーする</small><br><br>
+            <el-button type="warning" size="large" data-clipboard-target="#timeTableText"><i class="material-icons">content_copy</i></el-button>
+        </div>
+    </div>
+    <footer class="footer text-white">
+        <nav>
+            <p><b>AUTHOR</b></p>
+            <i class="material-icons">face</i><br>
+            <span>ssaigusa</span><br>
+        </nav>
+    </footer>
+    <div class="copyright align-center text-white">
+        <small>©ssaigusa 2017</small>
+    </div>
+</body>
+</html>
+
+<!-- import JavaScript -->
+<script src="./js/vue.min.js"></script>
+<script src="./js/clipboard.js"></script>
+<!-- import JavaScript(Element-UI) -->
+<script src="https://unpkg.com/element-ui/lib/index.js"></script>
+<script src="https://unpkg.com/element-ui/lib/umd/locale/ja.js"></script>
+<script src="./js/main.js"></script>
+
